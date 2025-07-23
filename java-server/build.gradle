@@ -1,0 +1,77 @@
+plugins {
+    id 'java'
+    id 'application' // run as a server application
+    id 'com.google.protobuf' version '0.9.5' // Protocol Buffers plugin (2025/05/15)
+    id 'com.github.johnrengelman.shadow' version '8.1.1' // fat jar support
+}
+
+group = 'net.keimag.sotagrpc'
+version = '1.0-SNAPSHOT'
+
+// Versions of libraries
+ext {
+    grpcVersion = '1.73.0'      // 2025/05/27
+    protobufVersion = '4.31.1'  // 2025/05/28 (for protoc)
+    junitVersion = '5.13.4'     // 2025/07/04
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+dependencies {
+    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+
+    // annotation library required by gRPC
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+
+    // for testing
+    testImplementation platform("org.junit:junit-bom:${junitVersion}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+// location of .proto files
+sourceSets {
+    main {
+        proto {
+            srcDir '../proto'
+        }
+    }
+}
+
+// Configuration for generating protobuf codes
+protobuf {
+    protoc {
+        // specify protoc compiler version
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+    plugins {
+        // plugin for generating JAVA codes from gRPC
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                grpc {}
+            }
+        }
+    }
+}
+
+application {
+    mainClass = 'net.keimag.sotagrpc.Main'
+    applicationDefaultJvmArgs = ["-Dmain.class=${mainClass}"]
+}
+
+test {
+    useJUnitPlatform()
+}

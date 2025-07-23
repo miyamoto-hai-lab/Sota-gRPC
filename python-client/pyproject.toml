@@ -1,0 +1,73 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "Sota-gRPC"
+dynamic = ["version"]
+description = 'A gRPC client library to control the Vstone Sota robot.'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = ["Vstone", "Sota", "robot", "gRPC", "client"]
+authors = [
+  { name = "kei-mag", email = "61485115+kei-mag@users.noreply.github.com" },
+]
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Environment :: Console",
+  "Framework :: Hatch",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Java Libraries",
+  "Topic :: System :: Hardware :: Hardware Drivers",
+  "Topic :: Utilities",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/kei-mag/Sota-gRPC"
+Documentation = "https://github.com/kei-mag/Sota-gRPC#readme"
+Wiki = "https://github.com/kei-mag/Sota-gRPC/wiki"
+Issues = "https://github.com/kei-mag/Sota-gRPC/issues"
+
+[tool.hatch.version]
+path = "src/sota_grpc/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/sota_grpc tests}"
+
+[tool.coverage.run]
+source_pkgs = ["sota_grpc", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/sota_grpc/__about__.py",
+]
+
+[tool.coverage.paths]
+sota_grpc = ["src/sota_grpc", "*/sota-grpc/src/sota_grpc"]
+tests = ["tests", "*/sota-grpc/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]

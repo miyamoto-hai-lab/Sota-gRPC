@@ -1,0 +1,20 @@
+# .gitignore
+
+# Java / Gradle
+.gradle
+build/
+*.jar
+*.war
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.iml
