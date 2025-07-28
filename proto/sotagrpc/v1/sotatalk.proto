@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package sotagrpc.v1;
+
+// 生成されるJavaコードのパッケージ名などを指定
+option java_package = "net.keimag.sotagrpc.v1.sotatalk";
+option java_multiple_files = true;
+
+// --------------------
+// サービス定義
+// --------------------
+
+// TextToSpeechSota の機能を提供
+service TextToSpeechService {
+  // テキストを音声データに変換する
+  rpc Synthesize(SynthesizeRequest) returns (SynthesizeResponse);
+}
+
+// SpeechRecog の機能を提供
+service SpeechRecognitionService {
+  // 自由な内容で音声認識を実行する (getRecognition)
+  rpc Recognize(RecognizeRequest) returns (RecognitionResult);
+
+  // 「はい」または「いいえ」を認識する (getYesorNo)
+  rpc RecognizeYesOrNo(RecognizeYesOrNoRequest) returns (RecognizeYesOrNoResponse);
+
+  // 人の名前を認識する (getName)
+  rpc RecognizeName(RecognizeNameRequest) returns (RecognizeNameResponse);
+
+  // NEW! 複数の名前候補を認識する (getNames)
+  rpc RecognizeNames(RecognizeNamesRequest) returns (RecognizeNamesResponse);
+
+  // NEW! 一般的な応答を認識する (getResponse)
+  rpc RecognizeGeneralResponse(RecognizeGeneralResponseRequest) returns (RecognizeGeneralResponseResponse);
+}
+
+// MotionAsSotaWish の機能を提供
+service MotionAsSotaWishService {
+  // 自然な身振りをしながら発話する (Say)
+  rpc Say(SayRequest) returns (SayResponse);
+
+  // 事前に定義されたシーンのモーションを再生する (play)
+  rpc PlayScene(PlaySceneRequest) returns (PlaySceneResponse);
+
+  // アイドリング（待機）モーションを開始・停止する
+  rpc StartIdling(StartIdlingRequest) returns (StartIdlingResponse);
+  rpc StopIdling(StopIdlingRequest) returns (StopIdlingResponse);
+}
+
+
+// --------------------
+// メッセージとEnum定義
+// --------------------
+
+// 音声合成時の設定
+message SpeechConfig {
+  int32 speech_rate = 1; // 話速 (5-25, 標準11)
+  int32 pitch = 2;       // 声の高さ (1-20, 標準13)
+  int32 intonation = 3;  // 抑揚 (1-15, 標準11)
+  // optional string language_code = 4; // 言語コード (例: "en", "ja") (GitHubで公開されているバージョンには未実装のため中止)
+}
+
+// -- TextToSpeechService Messages --
+message SynthesizeRequest {
+  string text = 1;
+  optional SpeechConfig config = 2;
+}
+message SynthesizeResponse {
+  bytes audio_data = 1; // wave形式
+}
+
+// -- SpeechRecognitionService Messages --
+// 音声認識の結果
+message RecognitionResult {
+  bool recognized = 1;
+  string basic_result = 2;
+  repeated Sentence sentence_list = 3;
+}
+message Sentence {
+  double score = 1;
+  repeated Word word_list = 2;
+}
+message Word {
+  repeated string labels = 1;
+  repeated string types = 2;
+}
+message RecognizeRequest {
+  int32 timeout_ms = 1;
+  // optional string language_code = 2; // 認識言語を指定 (GitHubで公開されているバージョンには未実装のため中止)
+}
+
+// RecognizeYesOrNo
+enum YesNoAnswer {
+  ANSWER_UNSPECIFIED = 0;
+  YES = 1;
+  NO = 2;
+}
+message RecognizeYesOrNoRequest {
+  int32 timeout_ms = 1;
+  int32 retry_count = 2;
+}
+message RecognizeYesOrNoResponse {
+  YesNoAnswer answer = 1;
+}
+
+// RecognizeName
+message RecognizeNameRequest {
+  int32 timeout_ms = 1;
+  int32 retry_count = 2;
+}
+message RecognizeNameResponse {
+  string name = 1; // 認識された名前
+}
+
+// NEW! RecognizeNames
+message RecognizeNamesRequest {
+    int32 timeout_ms = 1;
+    int32 retry_count = 2;
+}
+message RecognizeNamesResponse {
+    repeated string names = 1; // 認識された名前のリスト
+}
+
+// NEW! RecognizeGeneralResponse
+message RecognizeGeneralResponseRequest {
+    int32 timeout_ms = 1;
+    int32 retry_count = 2;
+}
+message RecognizeGeneralResponseResponse {
+    string response = 1; // 認識された応答文字列
+}
+
+
+// -- MotionAsSotaWishService Messages --
+enum MotionScene {
+  MOTION_SCENE_UNSPECIFIED = 0;
+  TALK = 1;
+  HELLO = 2;
+  BYE = 3;
+  PRESENTATION_NEUTRAL = 4;
+  PRESENTATION_UP = 5;
+  LOW_TENSION = 6;
+  CALL = 7;
+}
+message SayRequest {
+  string text = 1;
+  optional MotionScene scene = 2;
+  optional SpeechConfig config = 3;
+}
+message SayResponse {}
+
+message PlaySceneRequest {
+  MotionScene scene = 1;
+  int32 time_ms = 2;
+}
+message PlaySceneResponse {}
+
+message StartIdlingRequest {}
+message StartIdlingResponse {}
+message StopIdlingRequest {}
+message StopIdlingResponse {}

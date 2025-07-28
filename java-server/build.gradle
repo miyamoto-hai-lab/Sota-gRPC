@@ -1,59 +1,62 @@
+// java-server/build.gradle
+
 plugins {
     id 'java'
-    id 'application' // run as a server application
-    id 'com.google.protobuf' version '0.9.5' // Protocol Buffers plugin (2025/05/15)
-    id 'com.github.johnrengelman.shadow' version '8.1.1' // fat jar support
+    id 'application'
+    id 'com.google.protobuf' version '0.8.19' // <-- 変更: Java 8対応バージョン
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'net.keimag.sotagrpc'
-version = '1.0-SNAPSHOT'
+version = '1.0.0-SNAPSHOT'
 
-// Versions of libraries
 ext {
-    grpcVersion = '1.73.0'      // 2025/05/27
-    protobufVersion = '4.31.1'  // 2025/05/28 (for protoc)
-    junitVersion = '5.13.4'     // 2025/07/04
+    // ▼▼▼ Java 8対応バージョンに変更 ▼▼▼
+    grpcVersion = '1.58.1'      // Java 8をサポートする最終版の一つ
+    protobufVersion = '3.25.3'  // Java 8をサポートするProtobuf 3系の最終版
+    // ▲▲▲ Java 8対応バージョンに変更 ▲▲▲
+    junitVersion = '5.13.4'
 }
 
 repositories {
     mavenCentral()
 }
 
+// ▼▼▼ Java 8をターゲットにするように変更 ▼▼▼
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
+// ▲▲▲ Java 8をターゲットにするように変更 ▲▲▲
 
 dependencies {
+    implementation fileTree(dir: 'libs/SotaSample/lib', include: ['*.jar'])
+    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
     implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
-
-    // annotation library required by gRPC
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
-
-    // for testing
-    testImplementation platform("org.junit:junit-bom:${junitVersion}")
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
 }
 
-// location of .proto files
 sourceSets {
     main {
+        java {
+            srcDirs 'build/generated/source/proto/main/java', 'build/generated/source/proto/main/grpc'
+        }
         proto {
             srcDir '../proto'
+            include '**/*.proto'
         }
     }
 }
 
-// Configuration for generating protobuf codes
 protobuf {
     protoc {
-        // specify protoc compiler version
         artifact = "com.google.protobuf:protoc:${protobufVersion}"
     }
     plugins {
-        // plugin for generating JAVA codes from gRPC
         grpc {
             artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
         }
@@ -69,7 +72,6 @@ protobuf {
 
 application {
     mainClass = 'net.keimag.sotagrpc.Main'
-    applicationDefaultJvmArgs = ["-Dmain.class=${mainClass}"]
 }
 
 test {

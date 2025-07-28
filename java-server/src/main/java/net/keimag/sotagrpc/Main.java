@@ -1,17 +1,126 @@
 package net.keimag.sotagrpc;
 
-//TIP コードを<b>実行</b>するには、<shortcut actionId="Run"/> を押すか
-// ガターの <icon src="AllIcons.Actions.Execute"/> アイコンをクリックします。
-public class Main {
-    public static void main(String[] args) {
-        //TIP ハイライトされたテキストにキャレットがある状態で <shortcut actionId="ShowIntentionActions"/> を押すと
-        // IntelliJ IDEA によるその修正案を確認できます。
-        System.out.printf("Hello and welcome!");
+import io.grpc.ServerBuilder;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP <shortcut actionId="Debug"/> を押してコードのデバッグを開始します。<icon src="AllIcons.Debugger.Db_set_breakpoint"/> ブレークポイントを 1 つ設定しましたが、
-            // <shortcut actionId="ToggleLineBreakpoint"/> を押すといつでも他のブレークポイントを追加できます。
-            System.out.println("i = " + i);
+// Sotaのライブラリをインポート
+import jp.vstone.RobotLib.CRecordMic;
+import jp.vstone.RobotLib.CRobotMem;
+import jp.vstone.RobotLib.CRobotUtil;
+import jp.vstone.RobotLib.CSotaMotion;
+import jp.vstone.sotatalk.SpeechRecog;
+
+import java.io.IOException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Function;
+
+public class Main {
+    /**
+     * スレッドセーフでないSotaLibクラスのインスタンスをまとめて管理するクラス
+     */
+    public static class SotaContext {
+        public final CRobotMem mem;
+        public final CSotaMotion motion;
+        public final SpeechRecog speechRecog;
+//        public final CPlayWave player; // 例：音声再生機能
+        // 他のライブラリもここに追加していく (CRecordMic, SpeechRecog など)
+
+        public SotaContext() {
+            String TAG = "SotaContext";
+            CRobotUtil.Log(TAG, "Initializing Sota connection...");
+            this.mem = new CRobotMem();
+            if (!mem.Connect()) {
+                throw new RuntimeException("Failed to connect to Sota.");
+            } else {
+                CRobotUtil.Log(TAG, "VSMD connection established.");
+            }
+
+            // Sotaの各種スレッドアンセーフライブラリを初期化
+            this.motion = new CSotaMotion(mem);
+            this.speechRecog = new SpeechRecog(motion);
+            this.motion.InitRobot_Sota();
         }
+    }
+
+    /**
+     * SotaLib呼び出しをSota Threadで行う際のインターフェース
+     */
+    public static class SotaTask<T> {
+        private final Function<SotaContext, T> function;
+        private final CompletableFuture<T> future;
+
+        public SotaTask(Function<SotaContext, T> procedure, CompletableFuture<T> future) {
+            this.function = procedure;
+            this.future = future;
+        }
+
+        public void execute(SotaContext context) {
+            try {
+                T result = function.apply(context);
+                future.complete(result);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return this.function.toString();
+        }
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        String TAG = "Sota-gRPC";
+        int port = 8080;
+        System.out.println("Sota-gRPC server version 1.0.0");
+        // Sotaの各種ライブラリを初期
+        CRecordMic recordMic = new CRecordMic();
+        // TextToSpeechSotaは静的メソッドのみなのでインスタンス化は不要
+//        CRobotUtil.Log("Sota", "Firmware Rev. " + sotaContext.mem.FirmwareRev.get());
+
+        // 1. コマンドをやり取りするためのキューを作成
+        BlockingQueue<SotaTask<?>> commandQueue = new LinkedBlockingQueue<>();
+
+        // 2. Sotaのスレッドアンセーフライブラリを操作する専用スレッドを起動
+        Thread sotaThread = new Thread(() -> {
+            // ★★★★★ 専用スレッドの内部で、Sotaの初期化を行う ★★★★★
+            SotaContext sotaContext;
+            try {
+                sotaContext = new SotaContext();
+                CRobotUtil.Log(TAG, "SotaContext created successfully inside sotaThread.");
+            } catch (Exception e) {
+                throw  e;
+            }
+
+            // 初期化後、コマンドの処理ループを開始
+            try {
+                while (true) {
+                    SotaTask<?> task = commandQueue.take();
+                    // 初期化済みのsotaContextを使ってタスクを実行
+                    task.execute(sotaContext);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                CRobotUtil.Err("SotaThread", "SotaThread was interrupted.");
+            }
+        });
+        sotaThread.setContextClassLoader(Thread.currentThread().getContextClassLoader()); // 専用スレッドにmainスレッドのクラスローダーをセットする
+        sotaThread.start(); // スレッド開始
+        CRobotUtil.Log(TAG, "Sota thread started.");
+
+        // gRPCサーバーを起動
+        CRobotUtil.Log(TAG, "Starting gRPC server...");
+        io.grpc.Server server = ServerBuilder.forPort(port)
+                .addService(new MotionServiceImpl(commandQueue))
+                .addService(new PlaybackServiceImpl())
+                .addService(new RecordingServiceImpl(recordMic))
+//                .addService(new SpeechRecognitionServiceImpl(speechRecog))
+                .addService(new TextToSpeechServiceImpl())
+                .build();
+        server.start();
+        CRobotUtil.Log(TAG, "Server started on port " + port);
+
+        server.awaitTermination();
     }
 }

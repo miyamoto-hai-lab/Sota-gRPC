@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package sotagrpc.v1;
+
+// 生成されるJavaコードのパッケージ名などを指定
+option java_package = "net.keimag.sotagrpc.v1.camera";
+option java_multiple_files = true;
+
+// --------------------
+// サービス定義
+// --------------------
+
+service CameraService {
+  // 顔認識関連の各種機能を有効化/無効化する
+  rpc ConfigureDetection(ConfigureDetectionRequest) returns (ConfigureDetectionResponse);
+
+  // 顔追跡を開始する
+  rpc StartFaceTracking(StartFaceTrackingRequest) returns (StartFaceTrackingResponse);
+
+  // 顔追跡を停止する
+  rpc StopFaceTracking(StopFaceTrackingRequest) returns (StopFaceTrackingResponse);
+
+  // 顔認識結果のストリーミング配信を購読する (サーバープッシュ)
+  rpc SubscribeFaceDetections(SubscribeFaceDetectionsRequest) returns (stream FaceDetectionsFrame);
+
+  // 写真を撮影する
+  rpc TakePicture(TakePictureRequest) returns (TakePictureResponse);
+
+  // 顔をユーザーとして登録する
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
+
+  // 登録されているユーザーのリストを取得する
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+
+  // ユーザーを削除する
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+}
+
+
+// --------------------
+// メッセージとEnum定義
+// --------------------
+
+// 画像サイズ (CameraCaptureの定数より)
+enum ImageSize {
+  IMAGE_SIZE_UNSPECIFIED = 0;
+  QVGA = 1; // CAP_IMAGE_SIZE_QVGA
+  VGA = 2;  // CAP_IMAGE_SIZE_VGA
+  HD_720 = 3; // CAP_IMAGE_SIZE_HD_720
+  HD_1080 = 4; // CAP_IMAGE_SIZE_HD_1080
+  FIVE_M_PIXEL = 5; // CAP_IMAGE_SIZE_5Mpixel
+}
+
+// 性別 (FaceDetectResultの定数より)
+enum Gender {
+  GENDER_UNSPECIFIED = 0;
+  MALE = 1;   // SEX_MALE
+  FEMALE = 2; // SEX_FEMALE
+}
+
+// 顔認識結果の1フレーム分
+message FaceDetectionsFrame {
+  repeated FaceDetection faces = 1;
+  int64 timestamp = 2; // 検出時刻
+}
+
+// 検出された個々の顔の情報 (FaceDetectResultのメソッドより)
+message FaceDetection {
+  int32 face_id = 1;
+  Rectangle rect = 2;       // 顔の位置と大きさ
+  int32 smile_score = 3;      // 笑顔スコア (getSmile)
+  int32 age = 4;              // 推定年齢 (getAge)
+  Gender gender = 5;          // 推定性別 (isMale, isFemale)
+  FaceAngle angle = 6;        // 顔の角度
+  FaceUser matched_user = 7;  // 登録ユーザーと一致した場合の情報 (getUser)
+}
+
+// 登録ユーザーの情報 (FaceUserのメソッドより)
+message FaceUser {
+  string id = 1;
+  string name = 2;
+}
+
+// 顔の角度
+message FaceAngle {
+  int32 pitch = 1; // 頷き (getAnglePitch)
+  int32 yaw = 2;   // 横振り (getAngleYaw)
+  int32 roll = 3;  // かしげ (getAngleRoll)
+}
+
+// 矩形情報
+message Rectangle {
+  int32 x = 1;
+  int32 y = 2;
+  int32 width = 3;
+  int32 height = 4;
+}
+
+// ConfigureDetection
+message ConfigureDetectionRequest {
+  bool enable_smile_detection = 1;
+  bool enable_age_sex_detection = 2;
+  bool enable_face_search = 3;
+}
+message ConfigureDetectionResponse {}
+
+// StartFaceTracking
+message StartFaceTrackingRequest {}
+message StartFaceTrackingResponse {}
+
+// StopFaceTracking
+message StopFaceTrackingRequest {}
+message StopFaceTrackingResponse {}
+
+// SubscribeFaceDetections
+message SubscribeFaceDetectionsRequest {}
+// レスポンスは stream FaceDetectionsFrame
+
+// TakePicture
+message TakePictureRequest {
+  ImageSize image_size = 1;
+}
+message TakePictureResponse {
+  bytes image_data = 1; // JPEGなどの画像データ
+}
+
+// RegisterUser
+message RegisterUserRequest {
+  // どの顔を登録するかを指定 (例: 直近で検出された顔ID)
+  int32 face_id_to_register = 1;
+  string name = 2;
+}
+message RegisterUserResponse {
+  FaceUser registered_user = 1;
+}
+
+// ListUsers
+message ListUsersRequest {}
+message ListUsersResponse {
+  repeated FaceUser users = 1;
+}
+
+// DeleteUser
+message DeleteUserRequest {
+  string name = 1;
+}
+message DeleteUserResponse {}

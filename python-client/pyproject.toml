@@ -35,7 +35,10 @@ classifiers = [
   "Topic :: Utilities",
   "Typing :: Typed",
 ]
-dependencies = []
+dependencies = [
+  "grpcio >= 1.64.0",
+  "protobuf >= 4.25.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/kei-mag/Sota-gRPC"
@@ -44,7 +47,11 @@ Wiki = "https://github.com/kei-mag/Sota-gRPC/wiki"
 Issues = "https://github.com/kei-mag/Sota-gRPC/issues"
 
 [tool.hatch.version]
-path = "src/sota_grpc/__about__.py"
+path = "src/sota/__about__.py"
+
+
+[tool.hatch.build]
+packages = ["src/sota", "src/sota_grpc"]
 
 [tool.hatch.envs.types]
 extra-dependencies = [

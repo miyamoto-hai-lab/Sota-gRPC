@@ -1,0 +1,120 @@
+// proto/robotlib.proto
+
+syntax = "proto3";
+
+package sotagrpc.v1;
+
+// 生成されるJavaコードのパッケージ名などを指定
+option java_package = "net.keimag.sotagrpc.v1.robotlib";
+option java_multiple_files = true;
+
+// --------------------
+// サービス定義
+// --------------------
+
+// CRobotMotion / CSotaMotion の機能を提供
+service MotionService {
+  // (変更なし)
+  rpc ServoOn(ServoOnRequest) returns (ServoOnResponse);
+  rpc ServoOff(ServoOffRequest) returns (ServoOffResponse);
+  rpc PlayPose(PlayPoseRequest) returns (PlayPoseResponse);
+  rpc GetCurrentPose(GetCurrentPoseRequest) returns (Pose);
+  rpc IsEndInterAll(IsEndInterAllRequest) returns (IsEndInterAllResponse);
+  rpc GetPowerStatus(GetPowerStatusRequest) returns (GetPowerStatusResponse);
+  rpc GetButtonState(GetButtonStateRequest) returns (GetButtonStateResponse);
+  rpc EnableCollisionDetection(EnableCollisionDetectionRequest) returns (EnableCollisionDetectionResponse);
+  rpc DisableCollisionDetection(DisableCollisionDetectionRequest) returns (DisableCollisionDetectionResponse);
+  rpc SetMouthLedVoiceSync(SetMouthLedVoiceSyncRequest) returns (SetMouthLedVoiceSyncResponse);
+}
+
+// CPlayWave の機能を提供
+service PlaybackService {
+  // 音声データ(wav)を再生し、再生IDを返す
+  rpc PlayAudio(PlayAudioRequest) returns (PlayAudioResponse);
+  
+  // 指定したIDの音声再生を停止する
+  rpc StopAudio(StopAudioRequest) returns (StopAudioResponse);
+  
+  // 指定したIDの音声が再生中か確認する
+  rpc IsAudioPlaying(IsAudioPlayingRequest) returns (IsAudioPlayingResponse);
+}
+
+// (RecordingServiceとIntelligentMicServiceは変更なし)
+service RecordingService {
+  rpc StartRecording(StartRecordingRequest) returns (StartRecordingResponse);
+  rpc StopRecording(StopRecordingRequest) returns (StopRecordingResponse);
+  rpc IsRecording(IsRecordingRequest) returns (IsRecordingResponse);
+}
+service IntelligentMicService {
+  rpc SetMode(SetMicModeRequest) returns (SetMicModeResponse);
+  rpc GetSoundSource(GetSoundSourceRequest) returns (GetSoundSourceResponse);
+}
+
+
+// --------------------
+// メッセージとEnum定義
+// --------------------
+// (MotionService, RecordingService, IntelligentMicServiceのメッセージは変更なし)
+enum ServoID {
+  SERVO_ID_UNSPECIFIED = 0;
+  BODY_Y = 1; L_SHOULDER = 2; L_ELBOW = 3; R_SHOULDER = 4; R_ELBOW = 5; HEAD_Y = 6; HEAD_P = 7; HEAD_R = 8;
+}
+message Color { int32 red = 1; int32 green = 2; int32 blue = 3; }
+message LedState { Color left_eye = 1; Color right_eye = 2; int32 mouth = 3; Color power_button = 4; }
+message Pose { repeated Servo servos = 1; optional LedState led = 2;}
+message Servo { ServoID id = 1; int32 angle = 2; }
+message ServoOnRequest {}
+message ServoOnResponse {}
+message ServoOffRequest {}
+message ServoOffResponse {}
+message PlayPoseRequest { Pose pose = 1; int32 time_ms = 2; optional string motion_id = 3; }
+message PlayPoseResponse { bool success = 1; }
+message GetCurrentPoseRequest {}
+message IsEndInterAllRequest { optional string motion_id = 1; }
+message IsEndInterAllResponse { bool is_end_inter_all = 1; }
+message GetPowerStatusRequest {}
+message GetPowerStatusResponse { int32 battery_voltage_mv = 1; bool is_charging = 2; }
+message GetButtonStateRequest {}
+message GetButtonStateResponse { bool is_power_pressed = 1; bool is_vol_up_pressed = 2; bool is_vol_down_pressed = 3; }
+message EnableCollisionDetectionRequest {}
+message EnableCollisionDetectionResponse {}
+message DisableCollisionDetectionRequest {}
+message DisableCollisionDetectionResponse {}
+message SetMouthLedVoiceSyncRequest { bool enabled = 1; }
+message SetMouthLedVoiceSyncResponse {}
+message StartRecordingRequest { int32 duration_ms = 1; }
+message StartRecordingResponse { bool success = 1; }
+message StopRecordingRequest {}
+message StopRecordingResponse { bytes audio_data = 1; }
+message IsRecordingRequest {}
+message IsRecordingResponse { bool is_recording = 1; }
+enum MicMode { MIC_MODE_UNSPECIFIED = 0; NO_USE = 1; FRONT = 2; AUTO_DIRECTION = 3; }
+message SetMicModeRequest { MicMode mode = 1; }
+message SetMicModeResponse {}
+message GetSoundSourceRequest {}
+message GetSoundSourceResponse { bool is_voice_detected = 1; int32 direction_deg = 2; }
+
+
+// --- PlaybackService Messages (更新) ---
+message PlayAudioRequest {
+  bytes audio_data = 1; // wav形式
+  bool wait_for_completion = 2;
+}
+message PlayAudioResponse {
+  bool success = 1;
+  string playback_id = 2; // 再生を一意に識別するためのID
+}
+
+message StopAudioRequest {
+  // 停止したい再生のID。空の場合は全ての再生を停止。
+  optional string playback_id = 1;
+}
+message StopAudioResponse {}
+
+message IsAudioPlayingRequest {
+  // 確認したい再生のID。空の場合はいずれかが再生中か確認。
+  optional string playback_id = 1;
+}
+message IsAudioPlayingResponse {
+  bool is_playing = 1;
+}
