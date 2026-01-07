@@ -6,6 +6,8 @@ package sotagrpc.v1;
 option java_package = "net.keimag.sotagrpc.v1.sotatalk";
 option java_multiple_files = true;
 
+import "sotagrpc/v1/common.proto";
+
 // --------------------
 // サービス定義
 // --------------------
@@ -13,7 +15,9 @@ option java_multiple_files = true;
 // TextToSpeechSota の機能を提供
 service TextToSpeechService {
   // テキストを音声データに変換する
-  rpc Synthesize(SynthesizeRequest) returns (SynthesizeResponse);
+  rpc GetTTSData(TTSDataRequest) returns (GetTTSDataResponse);
+
+  rpc say(TTSDataRequest) returns (SuccessResponse);
 }
 
 // SpeechRecog の機能を提供
@@ -37,7 +41,7 @@ service SpeechRecognitionService {
 // MotionAsSotaWish の機能を提供
 service MotionAsSotaWishService {
   // 自然な身振りをしながら発話する (Say)
-  rpc Say(SayRequest) returns (SayResponse);
+  rpc SayWithMotion(SayWithMotionRequest) returns (SayWithMotionResponse);
 
   // 事前に定義されたシーンのモーションを再生する (play)
   rpc PlayScene(PlaySceneRequest) returns (PlaySceneResponse);
@@ -61,13 +65,14 @@ message SpeechConfig {
 }
 
 // -- TextToSpeechService Messages --
-message SynthesizeRequest {
+message TTSDataRequest {
   string text = 1;
   optional SpeechConfig config = 2;
 }
-message SynthesizeResponse {
+message GetTTSDataResponse {
   bytes audio_data = 1; // wave形式
 }
+
 
 // -- SpeechRecognitionService Messages --
 // 音声認識の結果
@@ -142,12 +147,12 @@ enum MotionScene {
   LOW_TENSION = 6;
   CALL = 7;
 }
-message SayRequest {
+message SayWithMotionRequest {
   string text = 1;
   optional MotionScene scene = 2;
   optional SpeechConfig config = 3;
 }
-message SayResponse {}
+message SayWithMotionResponse {}
 
 message PlaySceneRequest {
   MotionScene scene = 1;

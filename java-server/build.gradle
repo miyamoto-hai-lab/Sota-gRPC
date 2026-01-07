@@ -1,20 +1,51 @@
-// java-server/build.gradle
-
 plugins {
     id 'java'
     id 'application'
-    id 'com.google.protobuf' version '0.8.19' // <-- 変更: Java 8対応バージョン
+    id 'com.google.protobuf' version '0.8.19'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gorylenko.gradle-git-properties' version '2.5.2'
 }
 
 group = 'net.keimag.sotagrpc'
-version = '1.0.0-SNAPSHOT'
+
+// Gitのタグからバージョンを取得する関数
+def getVersionFromGit() {
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'describe', '--tags', '--dirty'
+            standardOutput = stdout
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        // Gitが使えない場合やタグがない場合のフォールバック
+        return "0.1.0-SNAPSHOT"
+    }
+}
+
+gitProperties {
+    // 例：1つ上の階層にある.gitディレクトリを指定
+    dotGitDirectory = file("${rootDir}/../.git")
+}
+
+// プロジェクトのバージョンに設定
+version = getVersionFromGit()
+
+// (オプション) JARのマニフェストにもバージョンを書き込む
+jar {
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version,
+                'Target-JAVA-Version': 1.8,
+                'Protobuf-Syntax-Version': 3
+        )
+    }
+}
 
 ext {
-    // ▼▼▼ Java 8対応バージョンに変更 ▼▼▼
     grpcVersion = '1.58.1'      // Java 8をサポートする最終版の一つ
     protobufVersion = '3.25.3'  // Java 8をサポートするProtobuf 3系の最終版
-    // ▲▲▲ Java 8対応バージョンに変更 ▲▲▲
     junitVersion = '5.13.4'
 }
 
@@ -22,12 +53,10 @@ repositories {
     mavenCentral()
 }
 
-// ▼▼▼ Java 8をターゲットにするように変更 ▼▼▼
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
-// ▲▲▲ Java 8をターゲットにするように変更 ▲▲▲
 
 dependencies {
     implementation fileTree(dir: 'libs/SotaSample/lib', include: ['*.jar'])
@@ -35,6 +64,9 @@ dependencies {
     implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
+    implementation 'info.picocli:picocli:4.7.7'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
+    implementation 'info.picocli:picocli-groovy:4.7.7'
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"

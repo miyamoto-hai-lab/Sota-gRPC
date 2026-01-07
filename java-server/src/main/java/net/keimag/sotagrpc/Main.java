@@ -7,6 +7,7 @@ import jp.vstone.RobotLib.CRecordMic;
 import jp.vstone.RobotLib.CRobotMem;
 import jp.vstone.RobotLib.CRobotUtil;
 import jp.vstone.RobotLib.CSotaMotion;
+import jp.vstone.sotatalk.MotionAsSotaWish;
 import jp.vstone.sotatalk.SpeechRecog;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ public class Main {
         public final CSotaMotion motion;
         public final SpeechRecog speechRecog;
 //        public final CPlayWave player; // 例：音声再生機能
+        public final MotionAsSotaWish motionAsSotaWish;
         // 他のライブラリもここに追加していく (CRecordMic, SpeechRecog など)
 
         public SotaContext() {
@@ -39,6 +41,7 @@ public class Main {
             // Sotaの各種スレッドアンセーフライブラリを初期化
             this.motion = new CSotaMotion(mem);
             this.speechRecog = new SpeechRecog(motion);
+            this.motionAsSotaWish = new MotionAsSotaWish(motion);
             this.motion.InitRobot_Sota();
         }
     }
@@ -86,23 +89,20 @@ public class Main {
         Thread sotaThread = new Thread(() -> {
             // ★★★★★ 専用スレッドの内部で、Sotaの初期化を行う ★★★★★
             SotaContext sotaContext;
-            try {
-                sotaContext = new SotaContext();
-                CRobotUtil.Log(TAG, "SotaContext created successfully inside sotaThread.");
-            } catch (Exception e) {
-                throw  e;
-            }
+            sotaContext = new SotaContext();
+            CRobotUtil.Log(TAG, "SotaContext created successfully inside sotaThread.");
 
             // 初期化後、コマンドの処理ループを開始
             try {
                 while (true) {
+                    System.out.println("Waiting task for Sota Thread...");
                     SotaTask<?> task = commandQueue.take();
                     // 初期化済みのsotaContextを使ってタスクを実行
                     task.execute(sotaContext);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                CRobotUtil.Err("SotaThread", "SotaThread was interrupted.");
+                CRobotUtil.Err("Sota Thread", "SotaThread was interrupted.");
             }
         });
         sotaThread.setContextClassLoader(Thread.currentThread().getContextClassLoader()); // 専用スレッドにmainスレッドのクラスローダーをセットする
@@ -112,11 +112,13 @@ public class Main {
         // gRPCサーバーを起動
         CRobotUtil.Log(TAG, "Starting gRPC server...");
         io.grpc.Server server = ServerBuilder.forPort(port)
+                .maxInboundMessageSize(512 * 1024 * 1024) // 例: 上限を512MBに設定
                 .addService(new MotionServiceImpl(commandQueue))
-                .addService(new PlaybackServiceImpl())
+                .addService(new MotionAsSotaWishServiceImpl(commandQueue))
+                .addService(new PlaybackServiceImpl(commandQueue))
                 .addService(new RecordingServiceImpl(recordMic))
 //                .addService(new SpeechRecognitionServiceImpl(speechRecog))
-                .addService(new TextToSpeechServiceImpl())
+                .addService(new TextToSpeechServiceImpl(commandQueue))
                 .build();
         server.start();
         CRobotUtil.Log(TAG, "Server started on port " + port);

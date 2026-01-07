@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
@@ -47,6 +47,7 @@ Wiki = "https://github.com/kei-mag/Sota-gRPC/wiki"
 Issues = "https://github.com/kei-mag/Sota-gRPC/issues"
 
 [tool.hatch.version]
+source = "vcs"
 path = "src/sota/__about__.py"
 
 

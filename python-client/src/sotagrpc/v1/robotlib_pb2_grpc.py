@@ -25,12 +25,138 @@ if _version_not_supported:
     )
 
 
-class MotionServiceStub(object):
+class ConfigurationServiceStub(object):
     """--------------------
     サービス定義
     --------------------
 
-    CRobotMotion / CSotaMotion の機能を提供
+    FirmwareやIPアドレスなど，Sota自身の情報を取得する機能を提供
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.GetIPAddress = channel.unary_unary(
+                '/sotagrpc.v1.ConfigurationService/GetIPAddress',
+                request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetIPAddressRequest.SerializeToString,
+                response_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetIPAddressResponse.FromString,
+                _registered_method=True)
+        self.GetFirmwareVersion = channel.unary_unary(
+                '/sotagrpc.v1.ConfigurationService/GetFirmwareVersion',
+                request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetFirmwareVersionRequest.SerializeToString,
+                response_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetFirmwareVersionResponse.FromString,
+                _registered_method=True)
+
+
+class ConfigurationServiceServicer(object):
+    """--------------------
+    サービス定義
+    --------------------
+
+    FirmwareやIPアドレスなど，Sota自身の情報を取得する機能を提供
+    """
+
+    def GetIPAddress(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetFirmwareVersion(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_ConfigurationServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'GetIPAddress': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetIPAddress,
+                    request_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetIPAddressRequest.FromString,
+                    response_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetIPAddressResponse.SerializeToString,
+            ),
+            'GetFirmwareVersion': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetFirmwareVersion,
+                    request_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetFirmwareVersionRequest.FromString,
+                    response_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetFirmwareVersionResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'sotagrpc.v1.ConfigurationService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('sotagrpc.v1.ConfigurationService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class ConfigurationService(object):
+    """--------------------
+    サービス定義
+    --------------------
+
+    FirmwareやIPアドレスなど，Sota自身の情報を取得する機能を提供
+    """
+
+    @staticmethod
+    def GetIPAddress(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sotagrpc.v1.ConfigurationService/GetIPAddress',
+            sotagrpc_dot_v1_dot_robotlib__pb2.GetIPAddressRequest.SerializeToString,
+            sotagrpc_dot_v1_dot_robotlib__pb2.GetIPAddressResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetFirmwareVersion(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sotagrpc.v1.ConfigurationService/GetFirmwareVersion',
+            sotagrpc_dot_v1_dot_robotlib__pb2.GetFirmwareVersionRequest.SerializeToString,
+            sotagrpc_dot_v1_dot_robotlib__pb2.GetFirmwareVersionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class MotionServiceStub(object):
+    """CRobotMotion / CSotaMotion の機能を提供
     """
 
     def __init__(self, channel):
@@ -74,15 +200,10 @@ class MotionServiceStub(object):
                 request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetButtonStateRequest.SerializeToString,
                 response_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetButtonStateResponse.FromString,
                 _registered_method=True)
-        self.EnableCollisionDetection = channel.unary_unary(
-                '/sotagrpc.v1.MotionService/EnableCollisionDetection',
-                request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.EnableCollisionDetectionRequest.SerializeToString,
-                response_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.EnableCollisionDetectionResponse.FromString,
-                _registered_method=True)
-        self.DisableCollisionDetection = channel.unary_unary(
-                '/sotagrpc.v1.MotionService/DisableCollisionDetection',
-                request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.DisableCollisionDetectionRequest.SerializeToString,
-                response_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.DisableCollisionDetectionResponse.FromString,
+        self.SetCollisionDetection = channel.unary_unary(
+                '/sotagrpc.v1.MotionService/SetCollisionDetection',
+                request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.SetCollisionDetectionRequest.SerializeToString,
+                response_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.SetCollisionDetectionResponse.FromString,
                 _registered_method=True)
         self.SetMouthLedVoiceSync = channel.unary_unary(
                 '/sotagrpc.v1.MotionService/SetMouthLedVoiceSync',
@@ -92,11 +213,7 @@ class MotionServiceStub(object):
 
 
 class MotionServiceServicer(object):
-    """--------------------
-    サービス定義
-    --------------------
-
-    CRobotMotion / CSotaMotion の機能を提供
+    """CRobotMotion / CSotaMotion の機能を提供
     """
 
     def ServoOn(self, request, context):
@@ -142,13 +259,7 @@ class MotionServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def EnableCollisionDetection(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def DisableCollisionDetection(self, request, context):
+    def SetCollisionDetection(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -198,15 +309,10 @@ def add_MotionServiceServicer_to_server(servicer, server):
                     request_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetButtonStateRequest.FromString,
                     response_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.GetButtonStateResponse.SerializeToString,
             ),
-            'EnableCollisionDetection': grpc.unary_unary_rpc_method_handler(
-                    servicer.EnableCollisionDetection,
-                    request_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.EnableCollisionDetectionRequest.FromString,
-                    response_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.EnableCollisionDetectionResponse.SerializeToString,
-            ),
-            'DisableCollisionDetection': grpc.unary_unary_rpc_method_handler(
-                    servicer.DisableCollisionDetection,
-                    request_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.DisableCollisionDetectionRequest.FromString,
-                    response_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.DisableCollisionDetectionResponse.SerializeToString,
+            'SetCollisionDetection': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetCollisionDetection,
+                    request_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.SetCollisionDetectionRequest.FromString,
+                    response_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.SetCollisionDetectionResponse.SerializeToString,
             ),
             'SetMouthLedVoiceSync': grpc.unary_unary_rpc_method_handler(
                     servicer.SetMouthLedVoiceSync,
@@ -222,11 +328,7 @@ def add_MotionServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class MotionService(object):
-    """--------------------
-    サービス定義
-    --------------------
-
-    CRobotMotion / CSotaMotion の機能を提供
+    """CRobotMotion / CSotaMotion の機能を提供
     """
 
     @staticmethod
@@ -419,7 +521,7 @@ class MotionService(object):
             _registered_method=True)
 
     @staticmethod
-    def EnableCollisionDetection(request,
+    def SetCollisionDetection(request,
             target,
             options=(),
             channel_credentials=None,
@@ -432,36 +534,9 @@ class MotionService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sotagrpc.v1.MotionService/EnableCollisionDetection',
-            sotagrpc_dot_v1_dot_robotlib__pb2.EnableCollisionDetectionRequest.SerializeToString,
-            sotagrpc_dot_v1_dot_robotlib__pb2.EnableCollisionDetectionResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def DisableCollisionDetection(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/sotagrpc.v1.MotionService/DisableCollisionDetection',
-            sotagrpc_dot_v1_dot_robotlib__pb2.DisableCollisionDetectionRequest.SerializeToString,
-            sotagrpc_dot_v1_dot_robotlib__pb2.DisableCollisionDetectionResponse.FromString,
+            '/sotagrpc.v1.MotionService/SetCollisionDetection',
+            sotagrpc_dot_v1_dot_robotlib__pb2.SetCollisionDetectionRequest.SerializeToString,
+            sotagrpc_dot_v1_dot_robotlib__pb2.SetCollisionDetectionResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -515,6 +590,11 @@ class PlaybackServiceStub(object):
                 request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioRequest.SerializeToString,
                 response_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioResponse.FromString,
                 _registered_method=True)
+        self.PlayLocalAudio = channel.unary_unary(
+                '/sotagrpc.v1.PlaybackService/PlayLocalAudio',
+                request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.PlayLocalAudioRequest.SerializeToString,
+                response_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioResponse.FromString,
+                _registered_method=True)
         self.StopAudio = channel.unary_unary(
                 '/sotagrpc.v1.PlaybackService/StopAudio',
                 request_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.StopAudioRequest.SerializeToString,
@@ -538,8 +618,17 @@ class PlaybackServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def PlayLocalAudio(self, request, context):
+        """Sotaローカルに保存された音声データ(wav)を再生し、再生IDを返す
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def StopAudio(self, request, context):
-        """指定したIDの音声再生を停止する
+        """rpc SaveAudioToLocal(SaveAudioToLocalRequest) returns RequestStatus;
+
+        指定したIDの音声再生を停止する
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -558,6 +647,11 @@ def add_PlaybackServiceServicer_to_server(servicer, server):
             'PlayAudio': grpc.unary_unary_rpc_method_handler(
                     servicer.PlayAudio,
                     request_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioRequest.FromString,
+                    response_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioResponse.SerializeToString,
+            ),
+            'PlayLocalAudio': grpc.unary_unary_rpc_method_handler(
+                    servicer.PlayLocalAudio,
+                    request_deserializer=sotagrpc_dot_v1_dot_robotlib__pb2.PlayLocalAudioRequest.FromString,
                     response_serializer=sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioResponse.SerializeToString,
             ),
             'StopAudio': grpc.unary_unary_rpc_method_handler(
@@ -598,6 +692,33 @@ class PlaybackService(object):
             target,
             '/sotagrpc.v1.PlaybackService/PlayAudio',
             sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioRequest.SerializeToString,
+            sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def PlayLocalAudio(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sotagrpc.v1.PlaybackService/PlayLocalAudio',
+            sotagrpc_dot_v1_dot_robotlib__pb2.PlayLocalAudioRequest.SerializeToString,
             sotagrpc_dot_v1_dot_robotlib__pb2.PlayAudioResponse.FromString,
             options,
             channel_credentials,

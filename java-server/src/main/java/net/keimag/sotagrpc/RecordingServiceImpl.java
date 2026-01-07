@@ -12,7 +12,7 @@ import java.util.Arrays;
 
 public class RecordingServiceImpl extends RecordingServiceGrpc.RecordingServiceImplBase {
     private final CRecordMic recordMic;
-    public static final String TMP_AUDIO_FILENAME = "tmp_Sota-gRPC.wav";
+    public static final String TMP_AUDIO_FILENAME = "tmp_Sota-gRPC_recording.wav";
 
     public RecordingServiceImpl(CRecordMic recordMic) {
         this.recordMic = recordMic;

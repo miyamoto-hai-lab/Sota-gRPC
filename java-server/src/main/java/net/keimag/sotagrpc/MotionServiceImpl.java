@@ -3,10 +3,9 @@ package net.keimag.sotagrpc;
 import io.grpc.stub.StreamObserver;
 import jp.vstone.RobotLib.CRobotPose;
 import jp.vstone.RobotLib.CRobotUtil;
-import jp.vstone.RobotLib.CSotaMotion;
 import net.keimag.sotagrpc.v1.robotlib.*;
 
-import java.awt.Color; // <-- java.awt.Colorをインポート
+import java.awt.Color;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -65,7 +64,7 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
             // 1. 結果を受け取るためのCompletableFutureを作成
             CompletableFuture<Void> future = new CompletableFuture<>();
             // 2. 実行したい処理とFutureをSotaTaskとしてキューに入れる
-            this.commandQueue.put(new Main.SotaTask<Void>(
+            this.commandQueue.put(new Main.SotaTask<>(
                     (sotaContext) -> {
                         sotaContext.motion.ServoOff();
                         return null;
@@ -106,19 +105,17 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
                         Pose requestedPose = request.getPose();
                         Servo[] servos = requestedPose.getServosList().toArray(new Servo[0]);
                         for (Servo servo : servos) {
-                            ids.add((byte) servo.getId().getNumber());
-                            pos.add((short) servo.getAngle());
+                            if (servo.getId() != ServoID.SERVO_ID_UNSPECIFIED) {
+                                ids.add((byte) servo.getId().getNumber());
+                                pos.add((short) servo.getAngle());
+                            }
                         }
                         pose.SetPose(ids.toArray(new Byte[0]), pos.toArray(new Short[0]));
                         if (requestedPose.hasLed()) {
                             LedState led = requestedPose.getLed();
                             pose.setLED_Sota(toAwtColor(led.getLeftEye()), toAwtColor(led.getRightEye()), led.getMouth(), toAwtColor(led.getPowerButton()));
                         }
-                        System.out.println(pose);
-                        System.out.println(time);
-                        boolean is_success = sotaContext.motion.play(pose, time);
-                        sotaContext.motion.waitEndinterpAll();
-                        return is_success;
+                        return sotaContext.motion.play(pose, time);
                     }, future
             ));
             // 3. 専用スレッドでの処理が完了し、futureに結果がセットされるまで待機する
@@ -147,7 +144,7 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
             // 1. 結果を受け取るためのCompletableFutureを作成
             CompletableFuture<Pose> future = new CompletableFuture<>();
             // 2. 実行したい処理とFutureをSotaTaskとしてキューに入れる
-            this.commandQueue.put(new Main.SotaTask<Pose>(
+            this.commandQueue.put(new Main.SotaTask<>(
                     (sotaContext) -> {
                         Short[] angles = sotaContext.motion.getReadpos();
                         Byte[] ids = sotaContext.motion.getDefaultIDs();
@@ -159,7 +156,7 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
                         Pose.Builder poseBuilder = Pose.newBuilder();
                         for (int i = 0; i < ids.length; i++) {
                             Servo servo = Servo.newBuilder()
-                                    .setId(servoIdFromByte(ids[i]))
+                                    .setId(ServoID.forNumber(ids[i]))
                                     .setAngle(angles[i])
                                     .build();
                             poseBuilder.addServos(servo);
@@ -192,7 +189,7 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
             // 1. 結果を受け取るためのCompletableFutureを作成
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             // 2. 実行したい処理とFutureをSotaTaskとしてキューに入れる
-            this.commandQueue.put(new Main.SotaTask<Boolean>(
+            this.commandQueue.put(new Main.SotaTask<>(
                     (sotaContext) -> {
                         return sotaContext.motion.isEndInterpAll();
                     }, future
@@ -223,7 +220,7 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
             // 1. 結果を受け取るためのCompletableFutureを作成
             CompletableFuture<GetPowerStatusResponse> future = new CompletableFuture<>();
             // 2. 実行したい処理とFutureをSotaTaskとしてキューに入れる
-            this.commandQueue.put(new Main.SotaTask<GetPowerStatusResponse>(
+            this.commandQueue.put(new Main.SotaTask<>(
                     (sotaContext) -> {
                         int voltage = sotaContext.motion.getBatteryVoltage();
                         boolean isCharging = sotaContext.motion.isCharging();
@@ -258,7 +255,7 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
             // 1. 結果を受け取るためのCompletableFutureを作成
             CompletableFuture<GetButtonStateResponse> future = new CompletableFuture<>();
             // 2. 実行したい処理とFutureをSotaTaskとしてキューに入れる
-            this.commandQueue.put(new Main.SotaTask<GetButtonStateResponse>(
+            this.commandQueue.put(new Main.SotaTask<>(
                     (sotaContext) -> {
                         boolean isPowerPressed = sotaContext.motion.isButton_Power();
                         boolean isVolUpPressed = sotaContext.motion.isButton_VolUp();
@@ -287,57 +284,29 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
 
     /**
      * <pre>
-     * 衝突検知を有効にする (EnableCollisionDetection)
-     * </pre>
-     */
-    @Override
-    public void enableCollisionDetection(EnableCollisionDetectionRequest request, StreamObserver<EnableCollisionDetectionResponse> responseObserver) {
-        CRobotUtil.Log(TAG, "RPC call: enableCollisionDetection");
-        try {
-            // 1. 結果を受け取るためのCompletableFutureを作成
-            CompletableFuture<Void> future = new CompletableFuture<>();
-            // 2. 実行したい処理とFutureをSotaTaskとしてキューに入れる
-            this.commandQueue.put(new Main.SotaTask<Void>(
-                    (sotaContext) -> {
-                        sotaContext.motion.EnableCollidionDetect();
-                        return null;
-                    }, future
-            ));
-            // 3. 専用スレッドでの処理が完了し、futureに結果がセットされるまで待機する
-            future.get(); // 処理結果が来るまで待機
-            EnableCollisionDetectionResponse response = EnableCollisionDetectionResponse.newBuilder().build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception e) {
-            e.printStackTrace();
-            responseObserver.onError(e);
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    /**
-     * <pre>
      * 衝突検知を無効にする (DisableCollisionDetection)
      * </pre>
      */
     @Override
-    public void disableCollisionDetection(DisableCollisionDetectionRequest request, StreamObserver<DisableCollisionDetectionResponse> responseObserver) {
-        CRobotUtil.Log(TAG, "RPC call: disableCollisionDetection");
+    public void setCollisionDetection(SetCollisionDetectionRequest request, StreamObserver<SetCollisionDetectionResponse> responseObserver) {
+        CRobotUtil.Log(TAG, "RPC call: setCollisionDetection");
         try {
             // 1. 結果を受け取るためのCompletableFutureを作成
             CompletableFuture<Void> future = new CompletableFuture<>();
             // 2. 実行したい処理とFutureをSotaTaskとしてキューに入れる
-            this.commandQueue.put(new Main.SotaTask<Void>(
+            this.commandQueue.put(new Main.SotaTask<>(
                     (sotaContext) -> {
-                        sotaContext.motion.DisableCollidionDetect();
+                        if (request.getEnabled()) {
+                            sotaContext.motion.EnableCollidionDetect();
+                        } else {
+                            sotaContext.motion.DisableCollidionDetect();
+                        }
                         return null;
                     }, future
             ));
             // 3. 専用スレッドでの処理が完了し、futureに結果がセットされるまで待機する
             future.get(); // 処理結果が来るまで待機
-            DisableCollisionDetectionResponse response = DisableCollisionDetectionResponse.newBuilder().build();
+            SetCollisionDetectionResponse response = SetCollisionDetectionResponse.newBuilder().build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception e) {
@@ -361,7 +330,7 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
             // 1. 結果を受け取るためのCompletableFutureを作成
             CompletableFuture<Void> future = new CompletableFuture<>();
             // 2. 実行したい処理とFutureをSotaTaskとしてキューに入れる
-            this.commandQueue.put(new Main.SotaTask<Void>(
+            this.commandQueue.put(new Main.SotaTask<>(
                     (sotaContext) -> {
                         if (request.getEnabled()) {
                             sotaContext.motion.enabeMouthLEDVoiceSync();
@@ -386,35 +355,6 @@ public class MotionServiceImpl extends MotionServiceGrpc.MotionServiceImplBase {
     }
 
     // --- Helper Methods for type conversion ---
-
-    private byte servoIdToByte(ServoID id) {
-        switch (id) {
-            case BODY_Y: return 1;
-            case L_SHOULDER: return 2;
-            case L_ELBOW: return 3;
-            case R_SHOULDER: return 4;
-            case R_ELBOW: return 5;
-            case HEAD_Y: return 6;
-            case HEAD_P: return 7;
-            case HEAD_R: return 8;
-            default: return 0; // Or throw an exception
-        }
-    }
-
-    private ServoID servoIdFromByte(byte id) {
-        switch (id) {
-            case 1: return ServoID.BODY_Y;
-            case 2: return ServoID.L_SHOULDER;
-            case 3: return ServoID.L_ELBOW;
-            case 4: return ServoID.R_SHOULDER;
-            case 5: return ServoID.R_ELBOW;
-            case 6: return ServoID.HEAD_Y;
-            case 7: return ServoID.HEAD_P;
-            case 8: return ServoID.HEAD_R;
-            default: return ServoID.UNRECOGNIZED;
-        }
-    }
-
     private Color toAwtColor(net.keimag.sotagrpc.v1.robotlib.Color grpcColor) {
         return new Color(grpcColor.getRed(), grpcColor.getGreen(), grpcColor.getBlue());
     }

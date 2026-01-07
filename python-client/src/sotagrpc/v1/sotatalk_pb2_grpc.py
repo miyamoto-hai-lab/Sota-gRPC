@@ -3,6 +3,7 @@
 import grpc
 import warnings
 
+from sotagrpc.v1 import common_pb2 as sotagrpc_dot_v1_dot_common__pb2
 from sotagrpc.v1 import sotatalk_pb2 as sotagrpc_dot_v1_dot_sotatalk__pb2
 
 GRPC_GENERATED_VERSION = '1.73.1'
@@ -39,10 +40,15 @@ class TextToSpeechServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Synthesize = channel.unary_unary(
-                '/sotagrpc.v1.TextToSpeechService/Synthesize',
-                request_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SynthesizeRequest.SerializeToString,
-                response_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SynthesizeResponse.FromString,
+        self.GetTTSData = channel.unary_unary(
+                '/sotagrpc.v1.TextToSpeechService/GetTTSData',
+                request_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.TTSDataRequest.SerializeToString,
+                response_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.GetTTSDataResponse.FromString,
+                _registered_method=True)
+        self.say = channel.unary_unary(
+                '/sotagrpc.v1.TextToSpeechService/say',
+                request_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.TTSDataRequest.SerializeToString,
+                response_deserializer=sotagrpc_dot_v1_dot_common__pb2.SuccessResponse.FromString,
                 _registered_method=True)
 
 
@@ -54,9 +60,15 @@ class TextToSpeechServiceServicer(object):
     TextToSpeechSota の機能を提供
     """
 
-    def Synthesize(self, request, context):
+    def GetTTSData(self, request, context):
         """テキストを音声データに変換する
         """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def say(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -64,10 +76,15 @@ class TextToSpeechServiceServicer(object):
 
 def add_TextToSpeechServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Synthesize': grpc.unary_unary_rpc_method_handler(
-                    servicer.Synthesize,
-                    request_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SynthesizeRequest.FromString,
-                    response_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SynthesizeResponse.SerializeToString,
+            'GetTTSData': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTTSData,
+                    request_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.TTSDataRequest.FromString,
+                    response_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.GetTTSDataResponse.SerializeToString,
+            ),
+            'say': grpc.unary_unary_rpc_method_handler(
+                    servicer.say,
+                    request_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.TTSDataRequest.FromString,
+                    response_serializer=sotagrpc_dot_v1_dot_common__pb2.SuccessResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -86,7 +103,7 @@ class TextToSpeechService(object):
     """
 
     @staticmethod
-    def Synthesize(request,
+    def GetTTSData(request,
             target,
             options=(),
             channel_credentials=None,
@@ -99,9 +116,36 @@ class TextToSpeechService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sotagrpc.v1.TextToSpeechService/Synthesize',
-            sotagrpc_dot_v1_dot_sotatalk__pb2.SynthesizeRequest.SerializeToString,
-            sotagrpc_dot_v1_dot_sotatalk__pb2.SynthesizeResponse.FromString,
+            '/sotagrpc.v1.TextToSpeechService/GetTTSData',
+            sotagrpc_dot_v1_dot_sotatalk__pb2.TTSDataRequest.SerializeToString,
+            sotagrpc_dot_v1_dot_sotatalk__pb2.GetTTSDataResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def say(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sotagrpc.v1.TextToSpeechService/say',
+            sotagrpc_dot_v1_dot_sotatalk__pb2.TTSDataRequest.SerializeToString,
+            sotagrpc_dot_v1_dot_common__pb2.SuccessResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -375,10 +419,10 @@ class MotionAsSotaWishServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Say = channel.unary_unary(
-                '/sotagrpc.v1.MotionAsSotaWishService/Say',
-                request_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SayRequest.SerializeToString,
-                response_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SayResponse.FromString,
+        self.SayWithMotion = channel.unary_unary(
+                '/sotagrpc.v1.MotionAsSotaWishService/SayWithMotion',
+                request_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SayWithMotionRequest.SerializeToString,
+                response_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SayWithMotionResponse.FromString,
                 _registered_method=True)
         self.PlayScene = channel.unary_unary(
                 '/sotagrpc.v1.MotionAsSotaWishService/PlayScene',
@@ -401,7 +445,7 @@ class MotionAsSotaWishServiceServicer(object):
     """MotionAsSotaWish の機能を提供
     """
 
-    def Say(self, request, context):
+    def SayWithMotion(self, request, context):
         """自然な身振りをしながら発話する (Say)
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -431,10 +475,10 @@ class MotionAsSotaWishServiceServicer(object):
 
 def add_MotionAsSotaWishServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Say': grpc.unary_unary_rpc_method_handler(
-                    servicer.Say,
-                    request_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SayRequest.FromString,
-                    response_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SayResponse.SerializeToString,
+            'SayWithMotion': grpc.unary_unary_rpc_method_handler(
+                    servicer.SayWithMotion,
+                    request_deserializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SayWithMotionRequest.FromString,
+                    response_serializer=sotagrpc_dot_v1_dot_sotatalk__pb2.SayWithMotionResponse.SerializeToString,
             ),
             'PlayScene': grpc.unary_unary_rpc_method_handler(
                     servicer.PlayScene,
@@ -464,7 +508,7 @@ class MotionAsSotaWishService(object):
     """
 
     @staticmethod
-    def Say(request,
+    def SayWithMotion(request,
             target,
             options=(),
             channel_credentials=None,
@@ -477,9 +521,9 @@ class MotionAsSotaWishService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sotagrpc.v1.MotionAsSotaWishService/Say',
-            sotagrpc_dot_v1_dot_sotatalk__pb2.SayRequest.SerializeToString,
-            sotagrpc_dot_v1_dot_sotatalk__pb2.SayResponse.FromString,
+            '/sotagrpc.v1.MotionAsSotaWishService/SayWithMotion',
+            sotagrpc_dot_v1_dot_sotatalk__pb2.SayWithMotionRequest.SerializeToString,
+            sotagrpc_dot_v1_dot_sotatalk__pb2.SayWithMotionResponse.FromString,
             options,
             channel_credentials,
             insecure,

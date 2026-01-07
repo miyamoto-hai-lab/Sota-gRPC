@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package sotagrpc.v1;
+
+message SuccessResponse {
+    bool is_successful = 1;
+}
